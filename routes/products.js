@@ -1,34 +1,16 @@
 const express = require('express');
 const router = express.Router();
 
-router.get('/', (req, res, next) => {
-    res.status(200).send({
-        msg: 'msg from product route'
-    })
-})
+const productsController = require('../controllers/productsController')
 
-router.get('/:id', (req, res, next) => {
-    res.status(200).send({
-        msg: `msg from product route - ${req.params.id}`
-    })
-})
+router.get('/', productsController.get)
 
-router.post('/', (req, res, next) => {
-    res.status(201).send({
-        'msg':'Module has been created'
-    })
-})
+router.get('/:id', productsController.getById)
 
-router.patch('/:id', (req, res, next) => {
-    res.status(201).send({
-        msg: `Patch - msg from product route - ${req.params.id}`
-    })
-})
+router.post('/', productsController.post)
 
-router.delete('/:id', (req, res, next) => {
-    res.status(204).send({
-        msg: `Delete - msg from product route - ${req.params.id}`
-    })
-})
+router.patch('/:id', productsController.patch)
+
+router.delete('/:id', productsController.delete)
 
 module.exports = router
