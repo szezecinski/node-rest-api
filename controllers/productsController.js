@@ -1,106 +1,105 @@
-const mysql = require('../mysql').pool
+const mysql = require('../mysql')
 
-exports.get = (req, res, next) => {
-    mysql.getConnection((err, conn) => {
-        if (err) return res.status(500).send({ error: err });
-
-        conn.query('select * from products', (err, result, fields) => {
-            if (err) return res.status(500).send({ error: err });
-
-            const response = {
-                quantity: result.length,
-                records: result.map(r => {
-                    return {
-                        id: r.id,
-                        name: r.name,
-                        price: r.price
-                    }
-                })
-            }
-
-            res.status(200).send({
-                response
-            })
-        })
-    })
-}
-
-exports.getById = (req, res, next) => {
-    mysql.getConnection((err, conn) => {
-        if (err) return res.status(500).send({ error: err });
-
-        conn.query('select * from products where id=?', [req.params.id], (err, result, fields) => {
-            if (err) return res.status(500).send({ error: err });
-
-            res.status(200).send({
-                response: result
-            })
-        })
-    })
-}
-
-exports.post = (req, res, next) => {
-    const product = {
-        name: req.body.name,
-        price: req.body.price
-    }
-
-    mysql.getConnection((err, conn) => {
-
-        if (err) return res.status(500).send({ error: err });
-
-        conn.query(`INSERT INTO products (NAME, PRICE) VALUE (?,?)`,
-            [product.name, product.price],
-            (err, result, fields) => {
-                conn.release()
-
-                if (err) {
-                    return res.status(500).send({
-                        error: err,
-                        response: null
-                    })
+exports.get = async (req, res, next) => {
+    try {
+        const result = await mysql.execute('select * from products')
+        const response = {
+            quantity: result.length,
+            records: result.map(r => {
+                return {
+                    id: r.id,
+                    name: r.name,
+                    price: r.price
                 }
-
-                res.status(201).send({
-                    msg: 'Product has been created',
-                    product_id: result.insertId
-                })
             })
-    })
+        }
+
+        res.status(200).send({ response })
+    } catch (err) {
+        return res.status(500).send({ error: err });
+    }
 }
 
-exports.patch = (req, res, next) => {
+exports.getById = async (req, res, next) => {
+    try {
+        const query = 'select * from products where id=?'
+        const params = [req.params.id]
+        const result = await mysql.execute(query, params)
+        const response = {
+            quantity: result.length,
+            records: result.map(r => {
+                return {
+                    id: r.id,
+                    name: r.name,
+                    price: r.price
+                }
+            })
+        }
 
+        res.status(200).send({ response })
+    } catch (error) {
+        return res.status(500).send({ error: err });
+    }
+}
+
+exports.post = async (req, res, next) => {
     const product = {
         name: req.body.name,
         price: req.body.price
     }
 
-    mysql.getConnection((err, conn) => {
-        if (err) return res.status(500).send({ error: err });
+    try {
+        const query = 'INSERT INTO products (NAME, PRICE) VALUE (?,?)'
+        const params = [product.name, product.price]
+        const result = await mysql.execute(query, params)
 
-        conn.query(
-            'update products set name=?, price=? where id=?',
-            [product.name, product.price, req.params.id], (err, result, fields) => {
-                if (err) return res.status(500).send({ error: err });
-
-                res.status(200).send({
-                    response: result
-                })
-            })
-    })
+        res.status(200).send({
+            message: 'Product has been inserted',
+            product: {
+                id: result.insertId,
+                name: req.body.name,
+                price: req.body.price
+            }
+        })
+    } catch (err) {
+        return res.status(500).send({ error: err });
+    }
 }
 
-exports.delete = (req, res, next) => {
-    mysql.getConnection((err, conn) => {
-        if (err) return res.status(500).send({ error: err });
+exports.patch = async (req, res, next) => {
+    try {
+        const product = {
+            name: req.body.name,
+            price: req.body.price
+        }
 
-        conn.query('delete from products where id=?', [req.params.id], (err, result, fields) => {
-            if (err) return res.status(500).send({ error: err });
+        const query = 'update products set name=?, price=? where id=?'
+        const params = [product.name, product.price, req.params.id]
+        const result = await mysql.execute(query, params)
 
-            res.status(204).send({
-                response: 'Product has been deleted'
-            })
+        res.status(202).send({
+            message: 'Product has been updated',
+            product: {
+                id: req.params.id,
+                name: req.body.name,
+                price: req.body.price
+            }
         })
-    })
+    } catch (err) {
+        return res.status(500).send({ error: err });
+    }
+}
+
+exports.delete = async (req, res, next) => {
+    try {
+        const query = 'delete from products where id=?'
+        const params = [req.params.id]
+        await mysql.execute(query, params)
+
+        res.status(202).send({
+            message: 'Product has been deleted'
+        })
+    } catch (err) {
+        return res.status(500).send({ error: err });
+    }
 }

@@ -1,5 +1,6 @@
 {
     "env": {
+        "MYSQL_LIMIT": 5,
         "MYSQL_USER": "user",
         "MYSQL_PWD": "pass",
         "MYSQL_DB": "mydb",
